@@ -24,7 +24,7 @@ jobs:
           5
           +
           3
-        expected-output: '15'
+        expected-output: '8'
         comparison-method: exact
         timeout: 10
         max-score: 10
