@@ -19,7 +19,7 @@ jobs:
       with:
         test-name: Сложение (add)
         setup-command: ''
-        command: python classroom_task.py
+        command: python task.py
         input: |-
           5
           +
@@ -34,7 +34,7 @@ jobs:
       with:
         test-name: Вычитание (sub)
         setup-command: ''
-        command: python classroom_task.py
+        command: python task.py
         input: |-
           15
           -
