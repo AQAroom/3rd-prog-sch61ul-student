@@ -1,4 +1,3 @@
-# Здесь пишем свой код
 a = int(input())
 z = input()
 b = int(input())
