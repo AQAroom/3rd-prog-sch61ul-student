@@ -47,7 +47,7 @@ jobs:
       uses: classroom-resources/autograding-io-grader@v1
       with:
         test-name: Тест 2 - Снятие средств
-        command: python testnk.py
+        command: python test_bank.py
         input: |
           1000
           -300
@@ -65,7 +65,7 @@ jobs:
       uses: classroom-resources/autograding-io-grader@v1
       with:
         test-name: Тест 3 - Недостаточно средств
-        command: python testnk.py
+        command: python test_bank.py
         input: |
           1000
           -1100
