@@ -9,10 +9,10 @@ import sys
 
 def main():
     try:
-        with open('task_Bank.py', 'r', encoding='utf-8') as f:
+        with open('task.py', 'r', encoding='utf-8') as f:
             code = f.read()
     except FileNotFoundError:
-        print("ERROR: Файл task_Bank.py не найден")
+        print("ERROR: Файл task.py не найден")
         sys.exit(1)
     
     try:
