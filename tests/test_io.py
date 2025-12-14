@@ -14,7 +14,8 @@ def main():
         sys.exit(1)
     
     # Читаем входные данные
-    data = sys.stdin.read().strip().split()
+    # data = sys.stdin.read().strip().split()
+    data = [input(), input()]
     if len(data) != 2:
         sys.exit(1)
     
