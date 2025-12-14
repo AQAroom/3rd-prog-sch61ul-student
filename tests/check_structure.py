@@ -7,83 +7,131 @@
 import ast
 import sys
 
-def main():
-    try:
-        with open('task.py', 'r', encoding='utf-8') as f:
-            code = f.read()
-    except FileNotFoundError:
-        print("ERROR: Файл task.py не найден")
-        sys.exit(1)
+def check_bank_account_structure(filename):
+    """Проверяет структуру класса BankAccount с помощью AST"""
     
     try:
-        tree = ast.parse(code)
-    except SyntaxError as e:
-        print(f"ERROR: Синтаксическая ошибка: {e}")
-        sys.exit(1)
-    
-    # Находим класс
-    bank_class = None
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name == 'BankAccount':
-            bank_class = node
-            break
-    
-    if not bank_class:
-        print("ERROR: Класс BankAccount не найден")
-        sys.exit(1)
-    
-    # Проверяем методы
-    methods_found = []
-    for item in bank_class.body:
-        if isinstance(item, ast.FunctionDef):
-            methods_found.append(item.name)
-    
-    required_methods = ["__init__", "add", "status", "withdraw"]
-    for method in required_methods:
-        if method not in methods_found:
-            print(f"ERROR: Отсутствует метод {method}")
-            sys.exit(1)
-    
-    # Находим __init__
-    init_method = None
-    for item in bank_class.body:
-        if isinstance(item, ast.FunctionDef) and item.name == "__init__":
-            init_method = item
-            break
-    
-    if not init_method:
-        print("ERROR: Метод __init__ не найден")
-        sys.exit(1)
-    
-    # Проверяем атрибуты
-    attributes_found = set()
-    for node in ast.walk(init_method):
-        if isinstance(node, ast.Assign):
-            for target in node.targets:
-                if isinstance(target, ast.Attribute):
-                    attributes_found.add(target.attr)
-    
-    required_attrs = ["account_number", "balance"]
-    for attr in required_attrs:
-        if attr not in attributes_found:
-            print(f"ERROR: Отсутствует атрибут {attr}")
-            sys.exit(1)
-    
-    # Проверяем вызов status()
-    status_called = False
-    for node in ast.walk(init_method):
-        if (isinstance(node, ast.Call) and 
-            isinstance(node.func, ast.Attribute) and 
-            node.func.attr == "status"):
-            status_called = True
-            break
-    
-    if not status_called:
-        print("ERROR: Метод status() не вызывается в __init__")
-        sys.exit(1)
-    
-    print("SUCCESS: Все проверки структуры пройдены")
-    sys.exit(0)
+        with open(filename, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        tree = ast.parse(content)
+        
+        # Счетчики для баллов
+        points = 0
+        max_points = 5
+        findings = []
+        
+        # Ищем класс BankAccount
+        bank_class = None
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef) and node.name == 'BankAccount':
+                bank_class = node
+                break
+        
+        if not bank_class:
+            findings.append("❌ Класс BankAccount не найден")
+            return 0, max_points, findings
+        
+        findings.append("✅ Класс BankAccount найден")
+        
+        # Проверяем методы класса
+        methods = []
+        for node in ast.walk(bank_class):
+            if isinstance(node, ast.FunctionDef):
+                methods.append(node.name)
+        
+        required_methods = ['__init__', 'add', 'status', 'withdraw']
+        missing_methods = []
+        
+        for method in required_methods:
+            if method in methods:
+                findings.append(f"✅ Метод {method}() найден")
+                points += 1
+            else:
+                findings.append(f"❌ Метод {method}() отсутствует")
+                missing_methods.append(method)
+        
+        # Проверяем наличие переменных экземпляра в __init__
+        init_found = False
+        for node in ast.walk(bank_class):
+            if isinstance(node, ast.FunctionDef) and node.name == '__init__':
+                init_found = True
+                # Ищем присваивания self.balance и self.account_number
+                has_balance = False
+                has_account_number = False
+                has_status_call = False
+                
+                for subnode in ast.walk(node):
+                    # Проверяем присваивание self.balance
+                    if (isinstance(subnode, ast.Assign) and
+                        isinstance(subnode.targets[0], ast.Attribute) and
+                        isinstance(subnode.targets[0].value, ast.Name) and
+                        subnode.targets[0].value.id == 'self' and
+                        subnode.targets[0].attr == 'balance'):
+                        has_balance = True
+                    
+                    # Проверяем присваивание self.account_number
+                    if (isinstance(subnode, ast.Assign) and
+                        isinstance(subnode.targets[0], ast.Attribute) and
+                        isinstance(subnode.targets[0].value, ast.Name) and
+                        subnode.targets[0].value.id == 'self' and
+                        subnode.targets[0].attr == 'account_number'):
+                        has_account_number = True
+                    
+                    # Проверяем вызов self.status()
+                    if (isinstance(subnode, ast.Expr) and
+                        isinstance(subnode.value, ast.Call) and
+                        isinstance(subnode.value.func, ast.Attribute) and
+                        isinstance(subnode.value.func.value, ast.Name) and
+                        subnode.value.func.value.id == 'self' and
+                        subnode.value.func.attr == 'status'):
+                        has_status_call = True
+                
+                if has_balance:
+                    findings.append("✅ Переменная self.balance найдена в __init__()")
+                    points += 0.5
+                else:
+                    findings.append("❌ Переменная self.balance не найдена в __init__()")
+                
+                if has_account_number:
+                    findings.append("✅ Переменная self.account_number найдена в __init__()")
+                    points += 0.5
+                else:
+                    findings.append("❌ Переменная self.account_number не найдена в __init__()")
+                
+                if has_status_call:
+                    findings.append("✅ Вызов self.status() найден в __init__()")
+                    points += 1
+                else:
+                    findings.append("❌ Вызов self.status() не найден в __init__()")
+                
+                break
+        
+        if not init_found:
+            findings.append("❌ Метод __init__() не найден (хотя должен быть)")
+        
+        return points, max_points, findings
+        
+    except Exception as e:
+        findings = [f"❌ Ошибка при анализе AST: {str(e)}"]
+        return 0, 5, findings
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) != 2:
+        print("Использование: python check_structure.py <filename>")
+        sys.exit(1)
+    
+    filename = sys.argv[1]
+    points, max_points, findings = check_bank_account_structure(filename)
+    
+    # Выводим результаты
+    for finding in findings:
+        print(finding)
+    
+    print(f"\nБаллы за структуру: {points}/{max_points}")
+    
+    # Сохраняем баллы в файл для GitHub Actions
+    with open("ast_results.txt", "w") as f:
+        f.write(f"points={points}\n")
+        f.write(f"max_points={max_points}\n")
+        f.write("findings=" + "|".join(findings) + "\n")
