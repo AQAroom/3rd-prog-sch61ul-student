@@ -100,7 +100,7 @@ jobs:
         echo "### Файл для анализа: $BANK_FILE" >> $GITHUB_STEP_SUMMARY
         
         # Запускаем проверку
-        python check_structure.py "$BANK_FILE"
+        python tests/check_structure.py "$BANK_FILE"
         
         # Читаем результаты
         if [ -f "ast_results.txt" ]; then
