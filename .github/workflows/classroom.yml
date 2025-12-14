@@ -225,7 +225,6 @@ jobs:
   run-linters:
     runs-on: ubuntu-latest
     name: Проверка качества кода
-    needs: [run-structure-tests, run-io-tests]
     if: always()
     
     steps:
