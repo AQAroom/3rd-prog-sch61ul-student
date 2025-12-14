@@ -214,9 +214,9 @@ jobs:
     - name: Run linters
       run: |
         if [ -f "task_Bank.py" ]; then
-          echo "### Проверка task_Bank.py" >> $GITHUB_STEP_SUMMARY
+          echo "### Проверка task.py" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          pylint task_Bank.py --exit-zero 2>&1 | tail -10 >> $GITHUB_STEP_SUMMARY
+          pylint task.py --exit-zero 2>&1 | tail -10 >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
         else
           echo "Файл task_Bank.py не найден" >> $GITHUB_STEP_SUMMARY
