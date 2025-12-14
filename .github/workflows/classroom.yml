@@ -88,7 +88,6 @@ jobs:
     - name: Extract Scores
       id: extract_scores
       run: |
-      run: |
         # Декодируем результаты из base64 и извлекаем score
         decode_and_get_score() {
           local encoded_result="$1"
