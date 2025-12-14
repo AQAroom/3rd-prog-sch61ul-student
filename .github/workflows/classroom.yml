@@ -29,7 +29,7 @@ jobs:
       uses: classroom-resources/autograding-io-grader@v1
       with:
         test-name: Тест 1 - Пополнение счета
-        command: python test_bank.py
+        command: python tests/test_io.py
         input: |
           1000
           200
@@ -47,7 +47,7 @@ jobs:
       uses: classroom-resources/autograding-io-grader@v1
       with:
         test-name: Тест 2 - Снятие средств
-        command: python test_bank.py
+        command: python tests/test_io.py
         input: |
           1000
           -300
@@ -65,7 +65,7 @@ jobs:
       uses: classroom-resources/autograding-io-grader@v1
       with:
         test-name: Тест 3 - Недостаточно средств
-        command: python test_bank.py
+        command: python tests/test_io.py
         input: |
           1000
           -1100
@@ -194,7 +194,6 @@ jobs:
   run-linters:
     runs-on: ubuntu-latest
     name: Проверка качества кода
-    needs: run-autograding-tests
     if: always()
     
     steps:
