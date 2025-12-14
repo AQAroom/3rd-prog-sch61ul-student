@@ -1,252 +1,68 @@
 name: "BankAccount Class Tests"
-on:
-  push:
-  repository_dispatch:
+on: [push]
 permissions:
   checks: write
   actions: read
   contents: read
 
 jobs:
-  # JOB 1: Проверка структуры класса
-  run-structure-tests:
-    name: Проверка структуры BankAccount
+  test-bank-account:
     runs-on: ubuntu-latest
-    if: github.actor != 'github-classroom[bot]'
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
       
-      - name: Create tests directory
-        run: mkdir -p tests
-      
-      - name: Download structure test script
-        run: |
-          curl -o tests/check_structure.py https://raw.githubusercontent.com/your-org/bankaccount-tests/main/tests/check_structure.py
-          # ИЛИ используем локальный файл, если он есть в репозитории
-      
-      - name: Check class structure
-        id: structure_test
+      # Проверка структуры
+      - name: Check structure
         uses: classroom-resources/autograding-io-grader@v1
         with:
-          test-name: "Проверка структуры BankAccount"
+          test-name: "Структура класса"
           command: "python tests/check_structure.py"
           expected-output: "SUCCESS: Все проверки структуры пройдены"
           comparison-method: contains
           timeout: 10
           max-score: 50
-
-  # JOB 2: Проверка ввода-вывода
-  run-io-tests:
-    name: Проверка ввода-вывода BankAccount
-    runs-on: ubuntu-latest
-    needs: run-structure-tests
-    if: github.actor != 'github-classroom[bot]'
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
       
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-      
-      - name: Create tests directory
-        run: mkdir -p tests
-      
-      - name: Download I/O test script
-        run: |
-          curl -o tests/test_bank.py https://raw.githubusercontent.com/your-org/bankaccount-tests/main/tests/test_bank.py
-      
-      # Test 1: Deposit
-      - name: "Тест 1 - Пополнение счета"
-        id: test1
+      # Тест 1: Пополнение
+      - name: Test 1 - Deposit
         uses: classroom-resources/autograding-io-grader@v1
         with:
           test-name: "Пополнение счета"
-          command: "python tests/test_bank.py"
-          input: |
-            1000
-            200
-          expected-output: |
-            Баланс счёта: 1000 единиц
-            На счет зачислено: 200 единиц
-            Баланс счёта: 1200 единиц
+          command: "python tests/test_io.py"
+          input: "1000\n200"
+          expected-output: "Баланс счёта: 1000 единиц\nНа счет зачислено: 200 единиц\nБаланс счёта: 1200 единиц"
           comparison-method: exact
           timeout: 5
           max-score: 17
       
-      # Test 2: Withdrawal
-      - name: "Тест 2 - Снятие средств"
-        id: test2
+      # Тест 2: Снятие
+      - name: Test 2 - Withdrawal
         uses: classroom-resources/autograding-io-grader@v1
         with:
           test-name: "Снятие средств"
-          command: "python tests/test_bank.py"
-          input: |
-            1000
-            -300
-          expected-output: |
-            Баланс счёта: 1000 единиц
-            Со счета снято: 300 единиц
-            Баланс счёта: 700 единиц
+          command: "python tests/test_io.py"
+          input: "1000\n-300"
+          expected-output: "Баланс счёта: 1000 единиц\nСо счета снято: 300 единиц\nБаланс счёта: 700 единиц"
           comparison-method: exact
           timeout: 5
           max-score: 17
       
-      # Test 3: Insufficient funds
-      - name: "Тест 3 - Недостаточно средств"
-        id: test3
+      # Тест 3: Недостаточно средств
+      - name: Test 3 - Insufficient funds
         uses: classroom-resources/autograding-io-grader@v1
         with:
           test-name: "Недостаточно средств"
-          command: "python tests/test_bank.py"
-          input: |
-            1000
-            -1100
-          expected-output: |
-            Баланс счёта: 1000 единиц
-            Недостаточно средств на счете
-            Баланс счёта: 1000 единиц
+          command: "python tests/test_io.py"
+          input: "1000\n-1100"
+          expected-output: "Баланс счёта: 1000 единиц\nНедостаточно средств на счете\nБаланс счёта: 1000 единиц"
           comparison-method: exact
           timeout: 5
           max-score: 16
-
-  # JOB 3: Генерация отчета
-  generate-report:
-    name: Генерация отчета
-    runs-on: ubuntu-latest
-    needs: [run-structure-tests, run-io-tests]
-    if: always()
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-      
-      - name: Extract Scores
-        id: extract_scores
-        run: |
-          # Функция для декодирования результатов
-          decode_and_get_score() {
-            local encoded_result="$1"
-            if [ -z "$encoded_result" ] || [ "$encoded_result" = "null" ]; then
-              echo "0"
-              return
-            fi
-            
-            echo "$encoded_result" | base64 -d | python3 -c "
-import sys, json
-try:
-    data = json.load(sys.stdin)
-    if 'tests' in data and len(data['tests']) > 0:
-        print(data['tests'][0]['score'])
-    else:
-        print('0')
-except:
-    print('0')
-" 2>/dev/null || echo "0"
-          }
-          
-          # Извлекаем баллы
-          STRUCTURE_SCORE=$(decode_and_get_score '${{ needs.run-structure-tests.outputs.result }}')
-          TEST1_SCORE=$(decode_and_get_score '${{ needs.run-io-tests.outputs.test1-result }}')
-          TEST2_SCORE=$(decode_and_get_score '${{ needs.run-io-tests.outputs.test2-result }}')
-          TEST3_SCORE=$(decode_and_get_score '${{ needs.run-io-tests.outputs.test3-result }}')
-          
-          # Сохраняем
-          echo "structure_score=$STRUCTURE_SCORE" >> $GITHUB_OUTPUT
-          echo "test1_score=$TEST1_SCORE" >> $GITHUB_OUTPUT
-          echo "test2_score=$TEST2_SCORE" >> $GITHUB_OUTPUT
-          echo "test3_score=$TEST3_SCORE" >> $GITHUB_OUTPUT
-          
-          TOTAL=$((STRUCTURE_SCORE + TEST1_SCORE + TEST2_SCORE + TEST3_SCORE))
-          echo "total_points=$TOTAL" >> $GITHUB_OUTPUT
-          
-          echo "STRUCTURE_SCORE=$STRUCTURE_SCORE" >> $GITHUB_ENV
-          echo "TEST1_SCORE=$TEST1_SCORE" >> $GITHUB_ENV
-          echo "TEST2_SCORE=$TEST2_SCORE" >> $GITHUB_ENV
-          echo "TEST3_SCORE=$TEST3_SCORE" >> $GITHUB_ENV
-          echo "TOTAL_POINTS=$TOTAL" >> $GITHUB_ENV
-      
-      - name: Generate Test Report
-        run: |
-          # Используем переменные окружения
-          STRUCTURE_SCORE="${STRUCTURE_SCORE:-0}"
-          TEST1_SCORE="${TEST1_SCORE:-0}"
-          TEST2_SCORE="${TEST2_SCORE:-0}"
-          TEST3_SCORE="${TEST3_SCORE:-0}"
-          TOTAL_POINTS="${TOTAL_POINTS:-0}"
-          
-          STRUCTURE_MAX=50
-          TEST1_MAX=17
-          TEST2_MAX=17
-          TEST3_MAX=16
-          MAX_POINTS=$((STRUCTURE_MAX + TEST1_MAX + TEST2_MAX + TEST3_MAX))
-          
-          # Генерация отчета
-          echo "## 🏦 Результаты проверки: Класс BankAccount" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          echo "### 📋 Проверка структуры класса" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Проверка | Баллы | Максимум | Статус |" >> $GITHUB_STEP_SUMMARY
-          echo "|----------|-------|----------|--------|" >> $GITHUB_STEP_SUMMARY
-          
-          if [ "$STRUCTURE_SCORE" -eq "$STRUCTURE_MAX" ]; then
-            STATUS="✅"
-          else
-            STATUS="❌"
-          fi
-          echo "| **Структура класса** | $STRUCTURE_SCORE | $STRUCTURE_MAX | $STATUS |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          echo "### 🧪 Тесты ввода-вывода" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Тест | Баллы | Максимум | Статус |" >> $GITHUB_STEP_SUMMARY
-          echo "|------|-------|----------|--------|" >> $GITHUB_STEP_SUMMARY
-          
-          if [ "$TEST1_SCORE" -eq "$TEST1_MAX" ]; then
-            STATUS1="✅"
-          else
-            STATUS1="❌"
-          fi
-          echo "| **Пополнение счета** | $TEST1_SCORE | $TEST1_MAX | $STATUS1 |" >> $GITHUB_STEP_SUMMARY
-          
-          if [ "$TEST2_SCORE" -eq "$TEST2_MAX" ]; then
-            STATUS2="✅"
-          else
-            STATUS2="❌"
-          fi
-          echo "| **Снятие средств** | $TEST2_SCORE | $TEST2_MAX | $STATUS2 |" >> $GITHUB_STEP_SUMMARY
-          
-          if [ "$TEST3_SCORE" -eq "$TEST3_MAX" ]; then
-            STATUS3="✅"
-          else
-            STATUS3="❌"
-          fi
-          echo "| **Недостаточно средств** | $TEST3_SCORE | $TEST3_MAX | $STATUS3 |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          echo "### 📊 Итог" >> $GITHUB_STEP_SUMMARY
-          echo "**Всего баллов: $TOTAL_POINTS / $MAX_POINTS**" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          if [ "$TOTAL_POINTS" -eq "$MAX_POINTS" ]; then
-            echo "🎉 **Отличная работа! Все тесты пройдены!**" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "*Автоматическая проверка завершена*" >> $GITHUB_STEP_SUMMARY
