@@ -131,13 +131,19 @@ jobs:
           echo "$encoded_result" | base64 -d | python3 -c "import sys, json; data=json.load(sys.stdin); print(data['tests'][0]['score'])"
         }
         
-        # Извлекаем баллы
-        TEST1_SCORE=$(decode_and_get_score '${{ steps.test1.outputs.result }}' 0)
-        TEST2_SCORE=$(decode_and_get_score '${{ steps.test2.outputs.result }}' 0)
-        TEST3_SCORE=$(decode_and_get_score '${{ steps.test3.outputs.result }}' 0)
+        # Извлекаем баллы из IO тестов
+        TEST1_SCORE=$(decode_and_get_score '${{ steps.test1.outputs.result }}')
+        TEST2_SCORE=$(decode_and_get_score '${{ steps.test2.outputs.result }}')
+        TEST3_SCORE=$(decode_and_get_score '${{ steps.test3.outputs.result }}')
         
-        # Получаем баллы за структуру
+        # Получаем баллы за структуру (используем переменную окружения)
         AST_SCORE="${AST_POINTS:-0}"
+        
+        # Убедимся что это числа
+        TEST1_SCORE=${TEST1_SCORE:-0}
+        TEST2_SCORE=${TEST2_SCORE:-0}
+        TEST3_SCORE=${TEST3_SCORE:-0}
+        AST_SCORE=${AST_SCORE:-0}
         
         # Сохраняем в outputs
         echo "test1_score=$TEST1_SCORE" >> $GITHUB_OUTPUT
