@@ -99,33 +99,28 @@ jobs:
         
         echo "### Файл для анализа: $BANK_FILE" >> $GITHUB_STEP_SUMMARY
         
-        # Запускаем проверку
-        python tests/check_structure.py "$BANK_FILE"
+        # Запускаем проверку и сохраняем вывод в переменную
+        AST_OUTPUT=$(python tests/check_structure.py "$BANK_FILE" 2>&1)
+        echo "### Результаты AST анализа:" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        echo "$AST_OUTPUT" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
         
-        # Читаем результаты
-        if [ -f "ast_results.txt" ]; then
-          source ast_results.txt
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Результаты AST анализа:" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          IFS='|' read -ra FINDING_ARRAY <<< "$findings"
-          for finding in "${FINDING_ARRAY[@]}"; do
-            echo "- $finding" >> $GITHUB_STEP_SUMMARY
-          done
-          
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Баллы за структуру класса:** **$points / $max_points**" >> $GITHUB_STEP_SUMMARY
-          
-          # Сохраняем в outputs
-          AST_POINTS=$(echo "$points" | cut -d'.' -f1)
-          echo "ast_points=$AST_POINTS" >> $GITHUB_OUTPUT
-          echo "AST_POINTS=$AST_POINTS" >> $GITHUB_ENV
-        else
-          echo "❌ Ошибка при выполнении AST анализа" >> $GITHUB_STEP_SUMMARY
-          echo "ast_points=0" >> $GITHUB_OUTPUT
-          echo "AST_POINTS=0" >> $GITHUB_ENV
+        # Извлекаем баллы из вывода Python скрипта
+        POINTS_LINE=$(echo "$AST_OUTPUT" | grep "Итоговый балл:" || echo "Итоговый балл: 0/5")
+        POINTS=$(echo "$POINTS_LINE" | grep -o "[0-9]\+\.[0-9]*\|[0-9]\+" | head -1 | cut -d'.' -f1)
+        
+        if [ -z "$POINTS" ]; then
+          POINTS=0
         fi
+        
+        echo "**Баллы за структуру класса:** **$POINTS / 5**" >> $GITHUB_STEP_SUMMARY
+        
+        # Сохраняем в outputs
+        echo "ast_points=$POINTS" >> $GITHUB_OUTPUT
+        echo "AST_POINTS=$POINTS" >> $GITHUB_ENV
     
     - name: Extract Scores
       id: extract_scores
