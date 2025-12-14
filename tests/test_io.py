@@ -9,7 +9,7 @@ import sys
 def main():
     # Импортируем класс
     try:
-        from task_Bank import BankAccount
+        from task import BankAccount
     except ImportError:
         sys.exit(1)
     
