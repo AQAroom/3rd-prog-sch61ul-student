@@ -6,7 +6,7 @@
 
 import sys
 
-def main():
+def check_io():
     # Импортируем класс
     try:
         from task import BankAccount
@@ -42,4 +42,4 @@ def main():
         sys.exit(1)
 
 if __name__ == "__main__":
-    main()
+    check_io()
