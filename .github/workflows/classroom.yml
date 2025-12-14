@@ -47,7 +47,7 @@ jobs:
       uses: classroom-resources/autograding-io-grader@v1
       with:
         test-name: Тест 2 - Снятие средств
-        command: python test_bank.py
+        command: python testnk.py
         input: |
           1000
           -300
@@ -65,7 +65,7 @@ jobs:
       uses: classroom-resources/autograding-io-grader@v1
       with:
         test-name: Тест 3 - Недостаточно средств
-        command: python test_bank.py
+        command: python testnk.py
         input: |
           1000
           -1100
@@ -213,7 +213,7 @@ jobs:
       
     - name: Run linters
       run: |
-        if [ -f "task_Bank.py" ]; then
+        if [ -f "task.py" ]; then
           echo "### Проверка task.py" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           pylint task.py --exit-zero 2>&1 | tail -10 >> $GITHUB_STEP_SUMMARY
