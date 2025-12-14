@@ -7,19 +7,17 @@
 import sys
 
 def main():
-    # Импортируем класс из файла студента
+    # Импортируем класс
     try:
         from task import BankAccount
     except ImportError:
-        # При ошибке импорта просто выходим
-        # autograding-io-grader сам обработает это как ошибку
-        return
+        sys.exit(1)
     
     # Читаем входные данные
     # data = sys.stdin.read().strip().split()
     data = [input(), input()]
     if len(data) != 2:
-        return
+        sys.exit(1)
     
     try:
         # Преобразуем в числа
@@ -39,11 +37,9 @@ def main():
         account.status()
         
     except (ValueError, TypeError):
-        # Неправильные типы данных
-        pass
+        sys.exit(1)
     except Exception:
-        # Любая другая ошибка
-        pass
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
