@@ -363,7 +363,7 @@ jobs:
           fi
           
           # Время выполнения Ruff
-          ruff_time=$(time (ruff check $files --quiet >/dev/null 2>&1) 2>&1 | grep real | awk '{print $2}')
+          ruff_time=$(time (ruff check $files --select=ALL --quiet >/dev/null 2>&1) 2>&1 | grep real | awk '{print $2}')
           echo "| Ruff ⚡ | $ruff_errors ошибки | $ruff_status | Мгновенно ($ruff_time) |" >> $GITHUB_STEP_SUMMARY
       
           echo "" >> $GITHUB_STEP_SUMMARY
