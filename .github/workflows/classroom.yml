@@ -1,5 +1,5 @@
 name: Autograding Tests
-on:
+'on':
   - push
   - repository_dispatch
 
@@ -77,6 +77,124 @@ jobs:
         timeout: 5
         max-score: 16
 
+    - name: Extract Scores
+      id: extract_scores
+      run: |
+        # Декодируем результаты из base64 и извлекаем score
+        decode_and_get_score() {
+          local encoded_result="$1"
+          echo "$encoded_result" | base64 -d | python3 -c "import sys, json; data=json.load(sys.stdin); print(data['tests'][0]['score'])"
+        }
+        
+        # Извлекаем баллы ИЗ ПРАВИЛЬНЫХ ИСТОЧНИКОВ
+        TEST1_SCORE=$(decode_and_get_score '${{ steps.test1.outputs.result }}' 0)
+        TEST2_SCORE=$(decode_and_get_score '${{ steps.test2.outputs.result }}' 0)
+        TEST3_SCORE=$(decode_and_get_score '${{ steps.test3.outputs.result }}' 0)
+        
+        # Сохраняем в outputs
+        echo "test1_score=$TEST1_SCORE" >> $GITHUB_OUTPUT
+        echo "test2_score=$TEST2_SCORE" >> $GITHUB_OUTPUT
+        echo "test3_score=$TEST3_SCORE" >> $GITHUB_OUTPUT
+        
+        # Вычисляем итоги
+        TOTAL_POINTS=$((TEST1_SCORE + TEST2_SCORE + TEST3_SCORE))
+        echo "total_points=$TOTAL_POINTS" >> $GITHUB_OUTPUT
+        
+        # Также сохраняем в переменные окружения
+        echo "TEST1_SCORE=$TEST1_SCORE" >> $GITHUB_ENV
+        echo "TEST2_SCORE=$TEST2_SCORE" >> $GITHUB_ENV
+        echo "TEST3_SCORE=$TEST3_SCORE" >> $GITHUB_ENV
+        echo "TOTAL_POINTS=$TOTAL_POINTS" >> $GITHUB_ENV
+    
+    - name: Generate Test Report
+      run: |
+        # Используем переменные окружения
+        TEST1_SCORE="${TEST1_SCORE:-0}"
+        TEST2_SCORE="${TEST2_SCORE:-0}"
+        TEST3_SCORE="${TEST3_SCORE:-0}"
+        TOTAL_POINTS="${TOTAL_POINTS:-0}"
+        
+        # Максимальные баллы
+        TEST1_MAX=17
+        TEST2_MAX=17
+        TEST3_MAX=16
+        MAX_POINTS=$((TEST1_MAX + TEST2_MAX + TEST3_MAX))
+        
+        # Определяем статусы
+        get_status() {
+          local score="$1"
+          local max="$2"
+          if [ "$score" -eq "$max" ]; then
+            echo "✅"
+          elif [ "$score" -gt 0 ]; then
+            echo "⚠️"
+          else
+            echo "❌"
+          fi
+        }
+        
+        TEST1_STATUS=$(get_status "$TEST1_SCORE" "$TEST1_MAX")
+        TEST2_STATUS=$(get_status "$TEST2_SCORE" "$TEST2_MAX")
+        TEST3_STATUS=$(get_status "$TEST3_SCORE" "$TEST3_MAX")
+        
+        # Генерация отчета
+        echo "## 🏦 Результаты проверки: Класс BankAccount" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        echo "### 🧪 Тесты ввода-вывода" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Тест | Баллы | Максимум | Статус |" >> $GITHUB_STEP_SUMMARY
+        echo "|------|-------|----------|--------|" >> $GITHUB_STEP_SUMMARY
+        
+        echo "| **Пополнение счета** | $TEST1_SCORE | $TEST1_MAX | $TEST1_STATUS |" >> $GITHUB_STEP_SUMMARY
+        echo "| **Снятие средств** | $TEST2_SCORE | $TEST2_MAX | $TEST2_STATUS |" >> $GITHUB_STEP_SUMMARY
+        echo "| **Недостаточно средств** | $TEST3_SCORE | $TEST3_MAX | $TEST3_STATUS |" >> $GITHUB_STEP_SUMMARY
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Итоговая статистика
+        echo "### 📊 Итоговая статистика" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Всего баллов:** **$TOTAL_POINTS / $MAX_POINTS**" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Расчет процента
+        if [ "$MAX_POINTS" -gt 0 ]; then
+          PERCENTAGE=$((TOTAL_POINTS * 100 / MAX_POINTS))
+        else
+          PERCENTAGE=0
+        fi
+        
+        # Сообщение в зависимости от результата
+        if [ "$TOTAL_POINTS" -eq "$MAX_POINTS" ]; then
+          echo "🎉 **Отличная работа! Все тесты пройдены!**" >> $GITHUB_STEP_SUMMARY
+        elif [ "$PERCENTAGE" -ge 80 ]; then
+          echo "👍 **Хороший результат!**" >> $GITHUB_STEP_SUMMARY
+        elif [ "$PERCENTAGE" -ge 60 ]; then
+          echo "⚠️ **Есть над чем поработать.**" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **Нужно серьезно поработать над заданием.**" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "---" >> $GITHUB_STEP_SUMMARY
+        echo "*Автоматическая проверка завершена*" >> $GITHUB_STEP_SUMMARY
+
+    - name: Autograding Reporter
+      id: reporter
+      uses: classroom-resources/autograding-grading-reporter@v1
+      env:
+        TEST1_RESULTS: "${{ steps.test1.outputs.result }}"
+        TEST2_RESULTS: "${{ steps.test2.outputs.result }}"
+        TEST3_RESULTS: "${{ steps.test3.outputs.result }}"
+      with:
+        runners: test1,test2,test3
+
+  # JOB 2: Check Class Struct
+  check-class-struct:
+    runs-on: ubuntu-latest
+    name: Проверка структуры класса
+    steps:
     # НОВЫЙ ШАГ: Проверка структуры класса через AST
     - name: Проверка структуры класса (AST анализ)
       id: ast_check
@@ -121,63 +239,42 @@ jobs:
         # Сохраняем в outputs
         echo "ast_points=$POINTS" >> $GITHUB_OUTPUT
         echo "AST_POINTS=$POINTS" >> $GITHUB_ENV
-    
-    - name: Extract Scores
-      id: extract_scores
+
+    - name: Extract Scores 2
+      id: extract_scores_2
       run: |
         # Декодируем результаты из base64 и извлекаем score
         decode_and_get_score() {
           local encoded_result="$1"
           echo "$encoded_result" | base64 -d | python3 -c "import sys, json; data=json.load(sys.stdin); print(data['tests'][0]['score'])"
         }
-        
-        # Извлекаем баллы из IO тестов
-        TEST1_SCORE=$(decode_and_get_score '${{ steps.test1.outputs.result }}')
-        TEST2_SCORE=$(decode_and_get_score '${{ steps.test2.outputs.result }}')
-        TEST3_SCORE=$(decode_and_get_score '${{ steps.test3.outputs.result }}')
-        
+
         # Получаем баллы за структуру (используем переменную окружения)
         AST_SCORE="${AST_POINTS:-0}"
         
         # Убедимся что это числа
-        TEST1_SCORE=${TEST1_SCORE:-0}
-        TEST2_SCORE=${TEST2_SCORE:-0}
-        TEST3_SCORE=${TEST3_SCORE:-0}
         AST_SCORE=${AST_SCORE:-0}
-        
+
         # Сохраняем в outputs
-        echo "test1_score=$TEST1_SCORE" >> $GITHUB_OUTPUT
-        echo "test2_score=$TEST2_SCORE" >> $GITHUB_OUTPUT
-        echo "test3_score=$TEST3_SCORE" >> $GITHUB_OUTPUT
         echo "ast_score=$AST_SCORE" >> $GITHUB_OUTPUT
         
         # Вычисляем итоги
-        TOTAL_POINTS=$((TEST1_SCORE + TEST2_SCORE + TEST3_SCORE + AST_SCORE))
+        TOTAL_POINTS=$((AST_SCORE))
         echo "total_points=$TOTAL_POINTS" >> $GITHUB_OUTPUT
-        
+
         # Также сохраняем в переменные окружения
-        echo "TEST1_SCORE=$TEST1_SCORE" >> $GITHUB_ENV
-        echo "TEST2_SCORE=$TEST2_SCORE" >> $GITHUB_ENV
-        echo "TEST3_SCORE=$TEST3_SCORE" >> $GITHUB_ENV
         echo "AST_SCORE=$AST_SCORE" >> $GITHUB_ENV
         echo "TOTAL_POINTS=$TOTAL_POINTS" >> $GITHUB_ENV
-    
-    - name: Generate Test Report
+
+    - name: Generate Test Report 2
       run: |
         # Используем переменные окружения
-        TEST1_SCORE="${TEST1_SCORE:-0}"
-        TEST2_SCORE="${TEST2_SCORE:-0}"
-        TEST3_SCORE="${TEST3_SCORE:-0}"
         AST_SCORE="${AST_SCORE:-0}"
         TOTAL_POINTS="${TOTAL_POINTS:-0}"
-        
+
         # Максимальные баллы
-        TEST1_MAX=17
-        TEST2_MAX=17
-        TEST3_MAX=16
         AST_MAX=5
-        MAX_POINTS=$((TEST1_MAX + TEST2_MAX + TEST3_MAX + AST_MAX))
-        
+
         # Определяем статусы
         get_status() {
           local score="$1"
@@ -191,25 +288,12 @@ jobs:
           fi
         }
         
-        TEST1_STATUS=$(get_status "$TEST1_SCORE" "$TEST1_MAX")
-        TEST2_STATUS=$(get_status "$TEST2_SCORE" "$TEST2_MAX")
-        TEST3_STATUS=$(get_status "$TEST3_SCORE" "$TEST3_MAX")
         AST_STATUS=$(get_status "$AST_SCORE" "$AST_MAX")
         
         # Генерация отчета
         echo "## 🏦 Результаты проверки: Класс BankAccount" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        
-        echo "### 🧪 Тесты ввода-вывода" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "| Тест | Баллы | Максимум | Статус |" >> $GITHUB_STEP_SUMMARY
-        echo "|------|-------|----------|--------|" >> $GITHUB_STEP_SUMMARY
-        
-        echo "| **Пополнение счета** | $TEST1_SCORE | $TEST1_MAX | $TEST1_STATUS |" >> $GITHUB_STEP_SUMMARY
-        echo "| **Снятие средств** | $TEST2_SCORE | $TEST2_MAX | $TEST2_STATUS |" >> $GITHUB_STEP_SUMMARY
-        echo "| **Недостаточно средств** | $TEST3_SCORE | $TEST3_MAX | $TEST3_STATUS |" >> $GITHUB_STEP_SUMMARY
-        
-        echo "" >> $GITHUB_STEP_SUMMARY
+
         echo "### 🔍 Проверка структуры класса" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "| Критерий | Баллы | Максимум | Статус |" >> $GITHUB_STEP_SUMMARY
@@ -217,7 +301,7 @@ jobs:
         echo "| **AST анализ структуры** | $AST_SCORE | $AST_MAX | $AST_STATUS |" >> $GITHUB_STEP_SUMMARY
         
         echo "" >> $GITHUB_STEP_SUMMARY
-        
+
         # Итоговая статистика
         echo "### 📊 Итоговая статистика" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
@@ -246,17 +330,7 @@ jobs:
         echo "---" >> $GITHUB_STEP_SUMMARY
         echo "*Автоматическая проверка завершена*" >> $GITHUB_STEP_SUMMARY
 
-    - name: Autograding Reporter
-      id: reporter
-      uses: classroom-resources/autograding-grading-reporter@v1
-      env:
-        TEST1_RESULTS: "${{ steps.test1.outputs.result }}"
-        TEST2_RESULTS: "${{ steps.test2.outputs.result }}"
-        TEST3_RESULTS: "${{ steps.test3.outputs.result }}"
-      with:
-        runners: test1,test2,test3
-
-  # JOB 2: Линтеры
+  # JOB 3: Линтеры
   run-linters:
     runs-on: ubuntu-latest
     name: Проверка качества кода
