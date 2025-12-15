@@ -1,4 +1,4 @@
-# Включите ВСЕ возможные категории
+[lint]
 select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
@@ -24,4 +24,9 @@ select = [
     "PLW", # pylint warnings
     "TRY", # tryceratops
     "RUF", # ruff-specific rules
+]
+ignore = [
+    "D203", "D211",      # конфликтующие правила blank lines
+    "D212", "D213",      # конфликтующие правила docstrings
+    "E501",              # длина строки
 ]
