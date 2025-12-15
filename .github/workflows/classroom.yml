@@ -351,15 +351,8 @@ jobs:
       
           # Ruff count
           # Запускаем Ruff и сохраняем вывод
-          ruff_output=$(ruff check $files 2>&1)
-          ruff_exit_code=$?
-          
-          # Извлекаем количество ошибок из последней строки
-          if echo "$ruff_output" | grep -q "Found.*error"; then
-              ruff_errors=$(echo "$ruff_output" | grep -oE 'Found ([0-9]+) error' | grep -oE '[0-9]+' || echo "0")
-          else
-              ruff_errors="0"
-          fi
+          ruff_output=$(ruff check $files --exit-zero --statistics 2>&1 | grep -v "^warning:")
+          ruff_errors=$(echo "$ruff_output" | awk '/^[0-9]+ / {sum+=$1} END {print sum+0}')
 
           # Время выполнения Ruff
           # ruff_time=$(time (ruff check $files --select=ALL --quiet >/dev/null 2>&1) 2>&1 | grep real | awk '{print $2}')
