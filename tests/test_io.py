@@ -16,8 +16,8 @@ def check_io():
         return
     
     # Читаем входные данные
-    # data = sys.stdin.read().strip().split()
-    data = [input(), input()]
+    data = sys.stdin.read().strip().split()
+    # data = [input(), input()]
     if len(data) != 2:
         return
     
