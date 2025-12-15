@@ -350,7 +350,26 @@ jobs:
           echo "| Flake8 | $flake8_errors ошибки | $flake8_status | Стиль и простые ошибки |" >> $GITHUB_STEP_SUMMARY
       
           # Ruff count
-          ruff_errors=$(ruff check $files --count --exit-zero 2>&1 | grep -Eo '[0-9]+ error' | head -1 | cut -d' ' -f1 || echo "0")
+          # ruff_errors=$(ruff check $files --count --exit-zero 2>&1 | grep -Eo '[0-9]+ error' | head -1 | cut -d' ' -f1 || echo "0")
+
+          # Замер времени для Ruff с высокой точностью
+          ruff_start=$(date +%s%N)  # наносекунды для максимальной точности
+          
+          # Запускаем Ruff и сохраняем вывод
+          ruff_output=$(ruff check $files --select=ALL 2>&1)
+          ruff_exit_code=$?
+          
+          ruff_end=$(date +%s%N)
+          
+          # Вычисляем время в секундах с 3 знаками после запятой
+          ruff_time_seconds=$(echo "scale=3; ($ruff_end - $ruff_start) / 1000000000" | bc)
+          
+          # Время выполнения Ruff
+          # ruff_time=$(time (ruff check $files --select=ALL --quiet >/dev/null 2>&1) 2>&1 | grep real | awk '{print $2}')
+          
+          # Считаем количество ошибок из вывода Ruff
+          ruff_errors=$(echo "$ruff_output" | grep -c ".*\.py:[0-9]\+:[0-9]\+:")
+
           if [ -z "$ruff_errors" ] || ! [[ "$ruff_errors" =~ ^[0-9]+$ ]]; then
             ruff_errors="0"
           fi
@@ -361,10 +380,9 @@ jobs:
           else
             ruff_status="❌ Много"
           fi
-          
-          # Время выполнения Ruff
-          ruff_time=$(time (ruff check $files --select=ALL --quiet >/dev/null 2>&1) 2>&1 | grep real | awk '{print $2}')
-          echo "| Ruff ⚡ | $ruff_errors ошибки | $ruff_status | Мгновенно ($ruff_time) |" >> $GITHUB_STEP_SUMMARY
+         
+          echo "| Ruff ⚡ | $ruff_errors ошибки | $ruff_status | Мгновенно ($ruff_time_seconds) |" >> $GITHUB_STEP_SUMMARY
+          echo "Ruff выполнился за ${ruff_time_seconds} секунд, найдено ошибок: $ruff_errors"
       
           echo "" >> $GITHUB_STEP_SUMMARY
           
