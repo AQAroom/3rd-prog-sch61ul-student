@@ -283,8 +283,8 @@ jobs:
 
       - name: Run linters
         run: |
-          # Ищем ВСЕ .py файлы в репозитории (кроме test_*)
-          files=$(git ls-files '*.py' | grep -v '^test_.*\.py$')
+          # Ищем ВСЕ .py файлы в репозитории. Исключаем и папку tests/, и файлы test_*.py в корне
+          files=$(git ls-files '*.py' | grep -v '^tests/' | grep -v '^test_.*\.py$')
           if [ -z "$files" ]; then
             echo "⚠️ Не найдены Python-файлы в твоём рекозитарии." >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
