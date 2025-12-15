@@ -19,7 +19,6 @@ select = [
     "INT", # flake8-gettext
     "I",   # isort
     "N",   # pep8-naming
-    "D",   # pydocstyle
     "PLE", # pylint errors
     "PLW", # pylint warnings
     "TRY", # tryceratops
