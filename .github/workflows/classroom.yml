@@ -350,21 +350,8 @@ jobs:
           echo "| Flake8 | $flake8_errors ошибки | $flake8_status | Стиль и простые ошибки |" >> $GITHUB_STEP_SUMMARY
       
           # Ruff count
-          # Запускаем Ruff и сохраняем вывод
-          echo "=== ДЕБАГ Ruff ==="
-          echo "Файлы: $files"
-          echo ""
-          echo "Вывод Ruff:"
-          ruff_output=$(ruff check $files 2>&1)
-          echo "$ruff_output"
-          echo ""
-          echo "Последние 3 строки:"
-          echo "$ruff_output" | tail -3
-          echo ""
-          echo "Поиск 'Found':"
-          echo "$ruff_output" | grep -i "found"
-          echo ""
-          echo "Код выхода: $?"
+          # Просто считаем все не-warning строки, содержащие ".py:"
+          ruff_errors=$(ruff check $files 2>&1 | grep -v "^warning:" | grep -c "\.py:[0-9]\+:[0-9]\+:" || echo "0")
 
           # Время выполнения Ruff
           # ruff_time=$(time (ruff check $files --select=ALL --quiet >/dev/null 2>&1) 2>&1 | grep real | awk '{print $2}')
