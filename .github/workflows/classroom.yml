@@ -351,13 +351,12 @@ jobs:
       
           # Ruff count
           ruff_errors=$(ruff check $files --select=ALL --count --exit-zero 2>&1 | grep -Eo '[0-9]+ error' | head -1 | cut -d' ' -f1 || echo "0")
+          # Считаем количество ошибок из вывода Ruff
+          # ruff_errors=$(echo "$ruff_output" | grep -c ".*\.py:[0-9]\+:[0-9]\+:")
 
           # Время выполнения Ruff
           ruff_time=$(time (ruff check $files --select=ALL --quiet >/dev/null 2>&1) 2>&1 | grep real | awk '{print $2}')
           
-          # Считаем количество ошибок из вывода Ruff
-          ruff_errors=$(echo "$ruff_output" | grep -c ".*\.py:[0-9]\+:[0-9]\+:")
-
           if [ -z "$ruff_errors" ] || ! [[ "$ruff_errors" =~ ^[0-9]+$ ]]; then
             ruff_errors="0"
           fi
