@@ -351,7 +351,12 @@ jobs:
       
           # Ruff count
           # Считаем количество строк-ошибок из вывода Ruff
-          ruff_errors=$(ruff check $files 2>&1 | grep -Ec "^[^:]+\.py:[0-9]+:[0-9]+:" || echo "0")
+          ruff_output=$(ruff check $files 2>&1)
+          if echo "$ruff_output" | grep -q "Found.*error"; then
+              ruff_errors=$(echo "$ruff_output" | grep -oP 'Found \K[0-9]+' || echo "0")
+          else
+              ruff_errors="0"
+          fi
 
           # Время выполнения Ruff
           # ruff_time=$(time (ruff check $files --select=ALL --quiet >/dev/null 2>&1) 2>&1 | grep real | awk '{print $2}')
