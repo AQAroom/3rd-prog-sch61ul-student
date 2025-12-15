@@ -350,10 +350,13 @@ jobs:
           echo "| Flake8 | $flake8_errors ошибки | $flake8_status | Стиль и простые ошибки |" >> $GITHUB_STEP_SUMMARY
       
           # Ruff count
-          # Считаем количество строк-ошибок из вывода Ruff
+          # Запускаем Ruff и сохраняем вывод
           ruff_output=$(ruff check $files 2>&1)
+          ruff_exit_code=$?
+          
+          # Извлекаем количество ошибок из последней строки
           if echo "$ruff_output" | grep -q "Found.*error"; then
-              ruff_errors=$(echo "$ruff_output" | grep -oP 'Found \K[0-9]+' || echo "0")
+              ruff_errors=$(echo "$ruff_output" | grep -oE 'Found ([0-9]+) error' | grep -oE '[0-9]+' || echo "0")
           else
               ruff_errors="0"
           fi
