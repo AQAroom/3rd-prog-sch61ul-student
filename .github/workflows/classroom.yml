@@ -347,7 +347,7 @@ jobs:
           else
             flake8_status="❌ Много"
           fi
-          echo "| Flake8 | $flake8_errors ошибки | $flake8_status | Стиль и простые ошибки |" >> $GITHUB_STEP_SUMMARY
+          echo "| Flake8 | $flake8_errors ошибок | $flake8_status | Стиль и простые ошибки |" >> $GITHUB_STEP_SUMMARY
       
           # Ruff count
           # Просто считаем все не-warning строки, содержащие ".py:"
@@ -357,9 +357,9 @@ jobs:
           # ruff_time=$(time (ruff check $files --select=ALL --quiet >/dev/null 2>&1) 2>&1 | grep real | awk '{print $2}')
           ruff_time=$( { time ruff check $files --quiet >/dev/null 2>&1; } 2>&1 | grep real | awk '{print $2}' )
           
-          if [ -z "$ruff_errors" ] || ! [[ "$ruff_errors" =~ ^[0-9]+$ ]]; then
-            ruff_errors="0"
-          fi
+          # if [ -z "$ruff_errors" ] || ! [[ "$ruff_errors" =~ ^[0-9]+$ ]]; then
+          #   ruff_errors="0"
+          # fi
           if [ "$ruff_errors" -eq 0 ]; then
             ruff_status="✅ Отлично"
           elif [ "$ruff_errors" -le 5 ]; then
@@ -368,7 +368,7 @@ jobs:
             ruff_status="❌ Много"
           fi
          
-          echo "| Ruff ⚡ | $ruff_errors ошибки | $ruff_status | Мгновенно ($ruff_time) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Ruff ⚡ | $ruff_errors ошибок | $ruff_status | Мгновенно ($ruff_time) |" >> $GITHUB_STEP_SUMMARY
           # echo "Ruff выполнился за ${ruff_time} секунд, найдено ошибок: $ruff_errors"
       
           echo "" >> $GITHUB_STEP_SUMMARY
