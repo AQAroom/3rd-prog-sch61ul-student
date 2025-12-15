@@ -397,5 +397,3 @@ jobs:
           echo "*Примечание учащимся:*" >> $GITHUB_STEP_SUMMARY
           echo "*Проверка качества кода может повлиять на твою оценку.*" >> $GITHUB_STEP_SUMMARY
           echo "*Используйте ее, чтобы улучшить свои навыки программирования!*" >> $GITHUB_STEP_SUMMARY
-
-          echo "Файл task_Bank.py не найден" >> $GITHUB_STEP_SUMMARY
