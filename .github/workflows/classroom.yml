@@ -351,7 +351,8 @@ jobs:
       
           # Ruff count
           # ruff_errors=$(ruff check $files --select=ALL --count --exit-zero 2>&1 | grep -Eo '[0-9]+ error' | head -1 | cut -d' ' -f1 || echo "0")
-          ruff_errors=$(ruff check $files --select=ALL --statistics 2>&1 | grep -E '^[0-9]+ +[^ ]+' | awk '{sum+=$1} END {print sum+0}')
+          # ruff_errors=$(ruff check $files --select=ALL --statistics 2>&1 | grep -E '^[0-9]+ +[^ ]+' | awk '{sum+=$1} END {print sum+0}')
+          ruff_errors=$(ruff check $files --select=ALL --count --exit-zero 2>&1 | tail -1)
           # Считаем количество ошибок из вывода Ruff
           # ruff_errors=$(echo "$ruff_output" | grep -c ".*\.py:[0-9]\+:[0-9]\+:")
 
