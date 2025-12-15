@@ -351,18 +351,20 @@ jobs:
       
           # Ruff count
           # Запускаем Ruff и сохраняем вывод
+          echo "=== ДЕБАГ Ruff ==="
+          echo "Файлы: $files"
+          echo ""
+          echo "Вывод Ruff:"
           ruff_output=$(ruff check $files 2>&1)
-          ruff_exit_code=$?
-          
-          # Удаляем предупреждения и оставляем только ошибки
-          clean_output=$(echo "$ruff_output" | grep -v "^warning:")
-          
-          # Ищем количество ошибок в очищенном выводе
-          if echo "$clean_output" | grep -q "Found.*error"; then
-              ruff_errors=$(echo "$clean_output" | grep -oE 'Found ([0-9]+) errors?' | grep -oE '[0-9]+' || echo "0")
-          else
-              ruff_errors="0"
-          fi
+          echo "$ruff_output"
+          echo ""
+          echo "Последние 3 строки:"
+          echo "$ruff_output" | tail -3
+          echo ""
+          echo "Поиск 'Found':"
+          echo "$ruff_output" | grep -i "found"
+          echo ""
+          echo "Код выхода: $?"
 
           # Время выполнения Ruff
           # ruff_time=$(time (ruff check $files --select=ALL --quiet >/dev/null 2>&1) 2>&1 | grep real | awk '{print $2}')
