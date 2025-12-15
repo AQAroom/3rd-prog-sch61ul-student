@@ -8,12 +8,7 @@ import sys
 
 def check_io():
     # Импортируем класс из файла студента
-    try:
-        from task import BankAccount
-    except ImportError:
-        # При ошибке импорта просто выходим
-        # autograding-io-grader сам обработает это как ошибку
-        return
+    from task import BankAccount
     
     # Читаем входные данные
     data = sys.stdin.read().strip().split()
